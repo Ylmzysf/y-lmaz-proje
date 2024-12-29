@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Çıkış Yapılıyor...</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script>
+        window.onload = function() {
+            // Kısa bir gecikme sonrası login sayfasına yönlendir
+            setTimeout(function() {
+                window.location.href = '/login';
+            }, 1000);
+        }
+    </script>
+</head>
+<body>
+    <%- include('sidebar') %>
+    <h1>Çıkış yapılıyor...</h1>
+</body>
+</html> 

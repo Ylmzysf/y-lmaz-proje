@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Personel Listesi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 250px;
+            background: #2c3e50;
+            color: white;
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .sidebar.active {
+            left: -250px;
+        }
+
+        .sidebar .logo {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid #34495e;
+        }
+
+        .sidebar .menu {
+            padding: 20px 0;
+        }
+
+        .sidebar .menu-item {
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar .menu-item:hover {
+            background: #34495e;
+        }
+
+        .sidebar .menu-item i {
+            margin-right: 10px;
+        }
+
+        .sidebar .menu-item.active {
+            background: #3498db;
+        }
+
+        .main-container {
+            margin-left: 250px;
+            transition: all 0.3s ease;
+            min-height: 100vh;
+        }
+
+        .main-container.active {
+            margin-left: 0;
+        }
+
+        .toggle-btn {
+            position: fixed;
+            left: 20px;
+            top: 20px;
+            background: #2c3e50;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 101;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                left: -250px;
+            }
+
+            .sidebar.active {
+                left: 0;
+            }
+
+            .main-container {
+                margin-left: 0;
+            }
+
+            .toggle-btn {
+                display: block;
+            }
+        }
+
+        .content {
+            padding: 20px;
+        }
+
+        .personel-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .personel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e74c3c;
+        }
+
+        .ekle-btn {
+            background-color: #2ecc71;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .personel-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .personel-table th,
+        .personel-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .personel-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+
+        .personel-table tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .islem-btn {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+
+        .guncelle-btn {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .sil-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 5px;
+            width: 80%;
+            max-width: 500px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <button class="toggle-btn">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <%- include('sidebar') %>
+
+    <div class="main-container">
+        <div class="content">
+            <div class="personel-container">
+                <div class="personel-header">
+                    <h2>Personel Listesi</h2>
+                    <button class="ekle-btn" onclick="personelEkleModalAc()">Yeni Personel Ekle</button>
+                </div>
+                <table class="personel-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Ad</th>
+                            <th>Soyad</th>
+                            <th>Maaş</th>
+                            <th>Ek Mesai</th>
+                            <th>Toplam</th>
+                            <th>Ödeme Tarihi</th>
+                            <th>İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody id="personelListesi">
+                        <!-- JavaScript ile doldurulacak -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Personel Ekleme Modal -->
+    <div id="personelEkleModal" class="modal">
+        <div class="modal-content">
+            <h3>Yeni Personel Ekle</h3>
+            <form id="personelEkleForm">
+                <div class="form-group">
+                    <label for="ad">Ad:</label>
+                    <input type="text" name="ad" required>
+                </div>
+                <div class="form-group">
+                    <label for="soyad">Soyad:</label>
+                    <input type="text" name="soyad" required>
+                </div>
+                <div class="form-group">
+                    <label for="maas_tutari">Maaş Tutarı:</label>
+                    <input type="number" name="maas_tutari" required>
+                </div>
+                <div class="form-group">
+                    <label for="ek_mesai_ucreti">Ek Mesai Ücreti:</label>
+                    <input type="number" name="ek_mesai_ucreti" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="odeme_tarihi">Ödeme Tarihi:</label>
+                    <input type="date" name="odeme_tarihi" required>
+                </div>
+                <button type="submit">Personel Ekle</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Personel Güncelleme Modal -->
+    <div id="personelGuncelleModal" class="modal">
+        <div class="modal-content">
+            <h3>Personel Bilgilerini Güncelle</h3>
+            <form id="personelGuncelleForm">
+                <input type="hidden" id="guncellePersonelId" name="personel_id">
+                <div class="form-group">
+                    <label for="guncelleAd">Ad:</label>
+                    <input type="text" id="guncelleAd" name="ad" required>
+                </div>
+                <div class="form-group">
+                    <label for="guncelleSoyad">Soyad:</label>
+                    <input type="text" id="guncelleSoyad" name="soyad" required>
+                </div>
+                <div class="form-group">
+                    <label for="guncelleMaas">Maaş Tutarı:</label>
+                    <input type="number" id="guncelleMaas" name="maas_tutari" required>
+                </div>
+                <div class="form-group">
+                    <label for="guncelleEkMesai">Ek Mesai Ücreti:</label>
+                    <input type="number" id="guncelleEkMesai" name="ek_mesai_ucreti" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="guncelleOdemeTarihi">Ödeme Tarihi:</label>
+                    <input type="date" id="guncelleOdemeTarihi" name="odeme_tarihi" required>
+                </div>
+                <button type="submit" class="guncelle-btn">Güncelle</button>
+                <button type="button" onclick="modalKapat('personelGuncelleModal')" class="sil-btn">İptal</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Sidebar toggle fonksiyonu
+        document.querySelector('.toggle-btn').addEventListener('click', function() {
+            document.querySelector('.sidebar').classList.toggle('active');
+            document.querySelector('.main-container').classList.toggle('active');
+        });
+
+        // Çıkış yapma fonksiyonu
+        document.getElementById('cikis').addEventListener('click', function(e) {
+            e.preventDefault();
+            if(confirm('Çıkış yapmak istediğinize emin misiniz?')) {
+                window.location.href = '/login';
+            }
+        });
+
+        // Personel listesini yükle
+        async function personelleriYukle() {
+            try {
+                const response = await fetch('/api/personel-listesi');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const tbody = document.getElementById('personelListesi');
+                    tbody.innerHTML = '';
+                    
+                    data.personeller.forEach(personel => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${personel.personel_id}</td>
+                            <td>${personel.ad}</td>
+                            <td>${personel.soyad}</td>
+                            <td>${personel.maas_tutari ? personel.maas_tutari.toLocaleString('tr-TR') + ' ₺' : '-'}</td>
+                            <td>${personel.ek_mesai_ucreti ? personel.ek_mesai_ucreti.toLocaleString('tr-TR') + ' ₺' : '-'}</td>
+                            <td>${personel.toplam_gider ? personel.toplam_gider.toLocaleString('tr-TR') + ' ₺' : '-'}</td>
+                            <td>${personel.odeme_tarihi ? new Date(personel.odeme_tarihi).toLocaleDateString('tr-TR') : '-'}</td>
+                            <td>
+                                <button class="islem-btn guncelle-btn" onclick="personelDuzenle({
+                                    personel_id: ${personel.personel_id},
+                                    ad: '${personel.ad}',
+                                    soyad: '${personel.soyad}',
+                                    maas_tutari: ${personel.maas_tutari},
+                                    ek_mesai_ucreti: ${personel.ek_mesai_ucreti || 0},
+                                    odeme_tarihi: '${personel.odeme_tarihi}'
+                                })">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="islem-btn sil-btn" onclick="personelSil(${personel.personel_id})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+            } catch (error) {
+                console.error('Personel listesi yükleme hatası:', error);
+            }
+        }
+
+        // Modal işlemleri
+        function personelEkleModalAc() {
+            document.getElementById('personelEkleModal').style.display = 'block';
+        }
+
+        function personelDuzenle(personel) {
+            document.getElementById('guncellePersonelId').value = personel.personel_id;
+            document.getElementById('guncelleAd').value = personel.ad;
+            document.getElementById('guncelleSoyad').value = personel.soyad;
+            document.getElementById('guncelleMaas').value = personel.maas_tutari;
+            document.getElementById('guncelleEkMesai').value = personel.ek_mesai_ucreti || 0;
+            document.getElementById('guncelleOdemeTarihi').value = personel.odeme_tarihi ? personel.odeme_tarihi.split('T')[0] : '';
+            
+            document.getElementById('personelGuncelleModal').style.display = 'block';
+        }
+
+        function modalKapat(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Personel ekleme
+        document.getElementById('personelEkleForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                const response = await fetch('/api/personel-ekle', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('Personel başarıyla eklendi');
+                    modalKapat('personelEkleModal');
+                    personelleriYukle();
+                    e.target.reset();
+                } else {
+                    alert('Hata: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Personel ekleme hatası:', error);
+                alert('Bir hata oluştu');
+            }
+        });
+
+        // Personel güncelleme
+        document.getElementById('personelGuncelleForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const personelId = formData.get('personel_id');
+            
+            const data = {
+                ad: formData.get('ad'),
+                soyad: formData.get('soyad'),
+                maas_tutari: formData.get('maas_tutari'),
+                ek_mesai_ucreti: formData.get('ek_mesai_ucreti'),
+                odeme_tarihi: formData.get('odeme_tarihi')
+            };
+
+            try {
+                const response = await fetch(`/api/personel-guncelle/${personelId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('Personel bilgileri güncellendi');
+                    modalKapat('personelGuncelleModal');
+                    personelleriYukle();
+                } else {
+                    alert('Hata: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Güncelleme hatası:', error);
+                alert('Bir hata oluştu');
+            }
+        });
+
+        // Personel silme
+        async function personelSil(personelId) {
+            if (confirm('Bu personeli silmek istediğinize emin misiniz?')) {
+                try {
+                    const response = await fetch(`/api/personel-sil/${personelId}`, {
+                        method: 'DELETE'
+                    });
+
+                    const result = await response.json();
+                    if (result.success) {
+                        alert('Personel başarıyla silindi');
+                        personelleriYukle();
+                    } else {
+                        alert('Hata: ' + result.error);
+                    }
+                } catch (error) {
+                    console.error('Personel silme hatası:', error);
+                    alert('Bir hata oluştu');
+                }
+            }
+        }
+
+        // Sayfa yüklendiğinde personel listesini yükle
+        document.addEventListener('DOMContentLoaded', personelleriYukle);
+    </script>
+</body>
+</html> 

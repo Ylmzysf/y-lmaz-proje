@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Siparişlerim</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .sepet-container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        .sepet-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .sepet-table th,
+        .sepet-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .sepet-table th {
+            background-color: #f8f9fa;
+        }
+        .toplam {
+            margin-top: 20px;
+            text-align: right;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .button-group {
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .geri-btn {
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            display: inline-block;
+        }
+        .onayla-btn {
+            padding: 12px 25px;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .onayla-btn:hover {
+            background-color: #27ae60;
+        }
+        .masa-secim {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .masa-secim select {
+            padding: 8px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-left: 10px;
+            width: 100px;
+        }
+        .hata-mesaji {
+            color: #e74c3c;
+            display: none;
+            margin-top: 5px;
+        }
+
+        @media screen and (max-width: 768px) {
+            .sepet-container {
+                padding: 10px;
+                margin: 20px auto;
+            }
+            .sepet-table th,
+            .sepet-table td {
+                padding: 10px;
+                font-size: 14px;
+            }
+            .button-group {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .geri-btn,
+            .onayla-btn {
+                width: 100%;
+                text-align: center;
+            }
+        }
+
+        .onay-mesaji {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #2ecc71;
+            color: white;
+            padding: 20px 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 1000;
+            text-align: center;
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+    <div class="sepet-container">
+        <div class="button-group">
+            <a href="/Kullanici_Ekrani" class="geri-btn">Menüye Dön</a>
+            <h1>Siparişlerim</h1>
+        </div>
+        
+        <% if(sepet.length === 0) { %>
+            <p>Sepetiniz boş.</p>
+        <% } else { %>
+            <table class="sepet-table">
+                <thead>
+                    <tr>
+                        <th>Ürün</th>
+                        <th>Adet</th>
+                        <th>Birim Fiyat</th>
+                        <th>Toplam</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% sepet.forEach(item => { %>
+                        <tr>
+                            <td><%= item.isim %></td>
+                            <td><%= item.adet %></td>
+                            <td><%= item.fiyat %> ₺</td>
+                            <td><%= item.fiyat * item.adet %> ₺</td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+            
+            <div class="toplam">
+                Toplam Tutar: <%= toplamTutar %> ₺
+            </div>
+
+            <div class="masa-secim">
+                <label for="masaKodu">Masa Seçiniz:</label>
+                <select id="masaKodu">
+                    <option value="">Masa Seçin</option>
+                    <% for(let i = 1; i <= 20; i++) { %>
+                        <option value="<%= i %>">Masa <%= i %></option>
+                    <% } %>
+                </select>
+                <div id="masaHata" class="hata-mesaji">Lütfen bir masa seçiniz!</div>
+            </div>
+
+            <div class="button-group">
+                <div></div>
+                <button onclick="siparisiOnayla()" class="onayla-btn">
+                    Siparişi Onayla
+                </button>
+            </div>
+        <% } %>
+    </div>
+
+    <div id="onayMesaji" class="onay-mesaji">
+        <h4>Siparişiniz Başarıyla Alındı!</h4>
+    </div>
+    <div id="overlay" class="overlay"></div>
+
+    <script>
+        function siparisiOnayla() {
+            const masaKodu = document.getElementById('masaKodu').value;
+            const masaHata = document.getElementById('masaHata');
+            const onayMesaji = document.getElementById('onayMesaji');
+            const overlay = document.getElementById('overlay');
+            
+            if (!masaKodu) {
+                masaHata.style.display = 'block';
+                return;
+            }
+            
+            masaHata.style.display = 'none';
+            
+            fetch('/kullanici-siparis/onayla', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    masaKodu: masaKodu
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    onayMesaji.style.display = 'block';
+                    overlay.style.display = 'block';
+                    
+                    setTimeout(() => {
+                        window.location.href = '/Kullanici_Ekrani';
+                    }, 2500);
+                } else {
+                    alert(data.error || 'Bir hata oluştu!');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Bir hata oluştu!');
+            });
+        }
+    </script>
+</body>
+</html> 

@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title> siparisler</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="/socket.io/socket.io.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+
+        .siparisler-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .siparis-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 15px;
+            height: 300px;
+            overflow: hidden;
+            transition: height 0.3s ease;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .siparis-card.expanded {
+            height: auto;
+        }
+
+        .masa-no {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .siparis-content {
+            flex: 1;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        .siparis-items {
+            max-height: 160px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+        }
+
+        .siparis-items::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .siparis-items::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+
+        .siparis-items::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+
+        .siparis-items::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        .siparis-footer {
+            margin-top: auto;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+
+        .siparis-items {
+            margin-left: 15px;
+        }
+
+        .siparis-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .toplam-fiyat {
+            margin-top: 10px;
+            text-align: right;
+            font-weight: bold;
+            color: #e74c3c;
+        }
+
+        .siparis-zaman {
+            color: #7f8c8d;
+            font-size: 12px;
+            text-align: right;
+            margin-top: 5px;
+        }
+
+        @media screen and (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .siparis-card {
+                padding: 10px;
+            }
+
+            .masa-no {
+                font-size: 16px;
+            }
+        }
+
+        .main-container {
+            display: flex;
+        }
+
+        .content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 20px;
+        }
+
+        @media screen and (max-width: 768px) {
+            .content {
+                margin-left: 0;
+                padding: 10px;
+            }
+        }
+
+        /* Sidebar stilleri */
+        .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 250px;
+        background: #2c3e50;
+        color: white;
+        padding-top: 0;
+        transition: transform 0.3s ease;
+        z-index: 1000;
+        }
+
+
+        .sidebar-header {
+        text-align: center;
+        padding: 15px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        margin: 0;
+        }
+
+        .sidebar-header h2 {
+        margin: 0;
+        font-size: 24px;
+        }
+
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu li {
+            padding: 15px 20px;
+            border-bottom: 1px solid #34495e;
+            transition: 0.3s;
+        }
+
+        .sidebar-menu li:hover {
+            background-color: #34495e;
+        }
+
+        .sidebar-menu a {
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+
+        .sidebar-menu i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .toggle-btn {
+            display: none;
+            position: fixed;
+            left: 10px;
+            top: 10px;
+            z-index: 1001;
+            background: #2c3e50;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        @media screen and (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-250px);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .toggle-btn {
+                display: block;
+            }
+
+            .content {
+                margin-left: 0;
+            }
+        }
+
+        .onay-btn {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        .onay-btn:hover {
+            background-color: #219a52;
+        }
+
+        .siparis-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); /* 2 sütunlu grid */
+            gap: 20px; /* Kartlar arası boşluk */
+            padding: 20px;
+        }
+
+        .siparis-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 15px;
+            margin: 0; /* Margin'i kaldırdık çünkü grid gap kullanıyoruz */
+        }
+
+        /* Mobil görünüm için medya sorgusu */
+        @media screen and (max-width: 768px) {
+            .siparis-container {
+                grid-template-columns: 1fr; /* Mobilde tek sütun */
+            }
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            align-items: center; /* Dikey hizalama */
+            justify-content: space-between; /* Yatay hizalama */
+        }
+
+        .onay-btn, .iptal-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+            min-width: 120px;
+            margin: 0; /* Margin'leri sıfırla */
+        }
+
+        .onay-btn {
+            background-color: #27ae60;
+            color: white;
+        }
+
+        .onay-btn:hover {
+            background-color: #219a52;
+        }
+
+        .iptal-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .iptal-btn:hover {
+            background-color: #c0392b;
+        }
+    </style>
+</head>
+<body>
+    <%- include('sidebar') %>
+    
+    <button class="toggle-btn">
+        <i class="fas fa-bars"></i>
+    </button>
+    
+    <div class="main-container">
+        <div class="content">
+            <div class="siparis-container">
+                <% siparisler.forEach(siparis => { %>
+                    <div class="siparis-card">
+                        <div class="masa-no">Masa <%= siparis.masa_kodu %></div>
+                        
+                        <div class="siparis-content">
+                            <div class="siparis-items">
+                                <% siparis.urunler.forEach(urun => { %>
+                                    <div class="siparis-item">
+                                        <span><%= urun.urun_isim %> x <%= urun.adet %></span>
+                                        <span><%= urun.toplam_fiyat %> ₺</span>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        </div>
+
+                        <div class="siparis-footer">
+                            <div class="toplam-fiyat">
+                                Toplam: <%= siparis.toplam_tutar %> ₺
+                            </div>
+                            <div class="siparis-zaman">
+                                <%= new Date(siparis.siparis_tarih).toLocaleString('tr-TR') %>
+                            </div>
+                            <div class="button-group">
+                                <button class="onay-btn" onclick="siparisiOnayla('<%= siparis.masa_kodu %>')">
+                                    Siparişi Onayla
+                                </button>
+                                <button class="iptal-btn" onclick="siparisiIptalEt('<%= siparis.masa_kodu %>')">
+                                    Siparişi İptal Et
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        const siparislerContainer = document.getElementById('siparislerContainer');
+
+        socket.on('yeniSiparis', (siparis) => {
+            console.log('Yeni sipariş geldi:', siparis);
+            const siparisCard = createSiparisCard(siparis);
+            siparislerContainer.insertBefore(siparisCard, siparislerContainer.firstChild);
+        });
+
+        function createSiparisCard(siparis) {
+            const card = document.createElement('div');
+            card.className = 'siparis-card';
+            
+            card.innerHTML = `
+                <div class="masa-no">Masa ${siparis.masa_kodu}</div>
+                <div class="siparis-items">
+                    ${siparis.urunler.map(urun => `
+                        <div class="siparis-item">
+                            <span>${urun.urun_isim} x ${urun.adet}</span>
+                            <span>${urun.toplam_fiyat} ₺</span>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="toplam-fiyat">
+                    Toplam: ${siparis.toplam_tutar} ₺
+                </div>
+                <div class="siparis-zaman">
+                    ${new Date(siparis.siparis_tarih).toLocaleString('tr-TR')}
+                </div>
+            `;
+            
+            return card;
+        }
+
+        // Sidebar toggle fonksiyonu
+        document.querySelector('.toggle-btn').addEventListener('click', function() {
+            document.querySelector('.sidebar').classList.toggle('active');
+        });
+
+        document.getElementById('cikis').addEventListener('click', function(e) {
+            e.preventDefault();
+            if(confirm('Çıkış yapmak istediğinize emin misiniz?')) {
+                window.location.href = '/login';
+            }
+        });
+
+        function siparisiOnayla(masaKodu) {
+            if(confirm(`Masa ${masaKodu} siparişini onaylamak istiyor musunuz?`)) {
+                console.log('Onaylama isteği gönderiliyor...'); // Debug log
+                
+                fetch('/siparis/onayla/' + masaKodu, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    console.log('Sunucu yanıtı:', response); // Debug log
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('İşlem sonucu:', data); // Debug log
+                    
+                    if(data.success) {
+                        alert('Sipariş başarıyla onaylandı!');
+                        location.reload();
+                    } else {
+                        alert('Hata: ' + (data.error || 'Bilinmeyen bir hata oluştu'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Hata detayı:', error); // Debug log
+                    alert('İşlem sırasında bir hata oluştu: ' + error.message);
+                });
+            }
+        }
+
+        function siparisiIptalEt(masaKodu) {
+            if(confirm(`Masa ${masaKodu} siparişini iptal etmek istiyor musunuz?`)) {
+                fetch('/siparis/iptal/' + masaKodu, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if(data.success) {
+                        alert('Sipariş başarıyla iptal edildi!');
+                        location.reload();
+                    } else {
+                        alert('Hata: ' + (data.error || 'Bilinmeyen bir hata oluştu'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Hata:', error);
+                    alert('İşlem sırasında bir hata oluştu: ' + error.message);
+                });
+            }
+        }
+
+        // Kart genişletme fonksiyonu
+        document.querySelectorAll('.siparis-card').forEach(card => {
+            card.addEventListener('click', function(e) {
+                // Eğer tıklanan element buton değilse kartı genişlet
+                if (!e.target.classList.contains('onay-btn')) {
+                    this.classList.toggle('expanded');
+                }
+            });
+        });
+
+        // Butonlara tıklandığında event'in yayılmasını engelle
+        document.querySelectorAll('.onay-btn, .iptal-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        });
+    </script>
+</body>
+</html>

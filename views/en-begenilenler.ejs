@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>En Beğenilenler</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        .content {
+            padding: 20px;
+        }
+
+        .favorites-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .favorites-header {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e74c3c;
+        }
+
+        .chart-container {
+            height: 500px;
+            position: relative;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <%- include('sidebar') %>
+    
+    <div class="main-container">
+        <div class="content">
+            <div class="favorites-container">
+                <h2 class="favorites-header">En Çok Satan 10 Ürün</h2>
+                <div class="chart-container">
+                    <canvas id="enCokSatanlarChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let satisGrafik = null;
+
+        async function enCokSatanlariGoster() {
+            try {
+                if (satisGrafik) {
+                    satisGrafik.destroy();
+                }
+
+                const response = await fetch('/api/en-cok-satanlar');
+                const data = await response.json();
+                
+                if (data.success && data.en_cok_satanlar) {
+                    const ctx = document.getElementById('enCokSatanlarChart');
+                    
+                    satisGrafik = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: data.en_cok_satanlar.map(item => item.urun_isim),
+                            datasets: [
+                                {
+                                    label: 'Satış Adedi',
+                                    data: data.en_cok_satanlar.map(item => item.satis_adedi),
+                                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                                    borderColor: 'rgba(54, 162, 235, 1)',
+                                    borderWidth: 1
+                                },
+                                {
+                                    label: 'Toplam Gelir',
+                                    data: data.en_cok_satanlar.map(item => item.toplam_gelir),
+                                    backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                                    borderColor: 'rgba(75, 192, 192, 1)',
+                                    borderWidth: 1,
+                                    yAxisID: 'y1'
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    position: 'left',
+                                    title: {
+                                        display: true,
+                                        text: 'Satış Adedi'
+                                    }
+                                },
+                                y1: {
+                                    beginAtZero: true,
+                                    position: 'right',
+                                    title: {
+                                        display: true,
+                                        text: 'Toplam Gelir (TL)'
+                                    },
+                                    grid: {
+                                        drawOnChartArea: false
+                                    },
+                                    ticks: {
+                                        callback: function(value) {
+                                            return value.toLocaleString('tr-TR', {
+                                                style: 'currency',
+                                                currency: 'TRY'
+                                            });
+                                        }
+                                    }
+                                }
+                            },
+                            plugins: {
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            if (context.dataset.label === 'Toplam Gelir') {
+                                                return context.dataset.label + ': ' + 
+                                                    context.raw.toLocaleString('tr-TR', {
+                                                        style: 'currency',
+                                                        currency: 'TRY'
+                                                    });
+                                            }
+                                            return context.dataset.label + ': ' + context.raw;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Grafik oluşturma hatası:', error);
+            }
+        }
+
+        // Sayfa yüklendiğinde ve her 5 dakikada bir güncelle
+        document.addEventListener('DOMContentLoaded', enCokSatanlariGoster);
+        setInterval(enCokSatanlariGoster, 300000);
+
+        // Sidebar toggle fonksiyonu
+        document.querySelector('.toggle-btn').addEventListener('click', function() {
+            document.querySelector('.sidebar').classList.toggle('active');
+        });
+
+        // Çıkış yapma fonksiyonu
+        document.getElementById('cikis').addEventListener('click', function(e) {
+            e.preventDefault();
+            if(confirm('Çıkış yapmak istediğinize emin misiniz?')) {
+                window.location.href = '/login';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menü</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        .container-fluid {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .category-section {
+            margin-bottom: 25px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .category-title {
+            color: #2c3e50;
+            background-color: #f8f9fa;
+            padding: 12px 15px;
+            margin: 0;
+            font-size: 18px;
+            border-bottom: 2px solid #e74c3c;
+            text-align: center;
+        }
+
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+
+        .table td:first-child {
+            text-align: left;  /* Ürün isimlerini sola yasla */
+            padding-left: 20px;
+        }
+
+        .table td {
+            vertical-align: middle;
+            padding: 10px 12px;
+            font-size: 14px;
+        }
+
+        .urun-kontrol {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .ekle-btn {
+            padding: 6px 12px;
+            background-color: #2ecc71 !important; /* Yeşil renk */
+            color: white !important;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            min-width: 35px;
+            transition: background-color 0.3s;
+        }
+
+        .ekle-btn:hover {
+            background-color: #27ae60 !important;
+        }
+
+        .azalt-btn {
+            padding: 6px 12px;
+            background-color: #e74c3c !important; /* Kırmızı renk */
+            color: white !important;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            min-width: 35px;
+            transition: background-color 0.3s;
+        }
+
+        .azalt-btn:hover {
+            background-color: #c0392b !important;
+        }
+
+        .azalt-btn:disabled {
+            background-color: #bdc3c7 !important;
+            cursor: not-allowed;
+        }
+
+        .urun-adet {
+            display: inline-block;
+            min-width: 25px;
+            text-align: center;
+            color: #2c3e50;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .sepet-button {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 8px 16px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 20px;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        .sepet-button:hover {
+            background-color: #2980b9;
+            color: white;
+            text-decoration: none;
+        }
+
+        #sepet-badge {
+            background-color: white;
+            color: #3498db;
+            padding: 2px 6px;
+            border-radius: 50%;
+            margin-left: 5px;
+            font-size: 12px;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        @media screen and (max-width: 768px) {
+            .container-fluid {
+                padding: 10px;
+            }
+
+            .table td:first-child {
+                padding-left: 10px;
+            }
+
+            .table td, .table th {
+                padding: 8px;
+                font-size: 13px;
+            }
+
+            .ekle-btn, .azalt-btn {
+                padding: 5px 10px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <a href="/Kullanici_Sepet" class="sepet-button">
+        Siparişlerim <span id="sepet-badge">0</span>
+    </a>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <!-- Tüm kategorileri ekleyelim -->
+                <% const kategoriler = [
+                    { id: 'kahvalti', title: 'Kahvaltı', data: kahvaltiDatas },
+                    { id: 'atistirmalik', title: 'Atıştırmalıklar', data: atistirmalikDatas },
+                    { id: 'tatli', title: 'Tatlılar', data: tatliDatas },
+                    { id: 'sicakIcecek', title: 'Sıcak İçecekler', data: sicakIcecekDatas },
+                    { id: 'kahve', title: 'Kahveler', data: kahveDatas },
+                    { id: 'turkKahve', title: 'Türk Kahveleri', data: turkKahveDatas },
+                    { id: 'bitkiCay', title: 'Bitki Çayları', data: bitkiCayDatas },
+                    { id: 'sogukIcecek', title: 'Soğuk İçecekler', data: sogukIcecekDatas },
+                    { id: 'sogukKahve', title: 'Soğuk Kahveler', data: sogukKahveDatas },
+                    { id: 'mesrubat', title: 'Meşrubatlar', data: mesrubatDatas }
+                ]; %>
+
+                <% kategoriler.forEach(kategori => { %>
+                    <% if(kategori.data && kategori.data.length > 0) { %>
+                        <div class="category-section">
+                            <h4 class="category-title"><%= kategori.title %></h4>
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Ürün</th>
+                                            <th>Fiyat</th>
+                                            <th>İşlem</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% kategori.data.forEach(item => { %>
+                                            <tr>
+                                                <td><%= item.urun_isim %></td>
+                                                <td><%= item.urun_fiyat %> ₺</td>
+                                                <td>
+                                                    <div class="urun-kontrol">
+                                                        <button class="ekle-btn" 
+                                                                onclick="sepeteEkle('<%= item.urun_id %>', '<%= item.urun_isim %>', '<%= item.urun_fiyat %>')">
+                                                            +
+                                                        </button>
+                                                        <span class="urun-adet" id="adet-<%= item.urun_id %>">0</span>
+                                                        <button class="azalt-btn" 
+                                                                onclick="sepettenAzalt('<%= item.urun_id %>')"
+                                                                id="azalt-<%= item.urun_id %>">
+                                                            -
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        <% }); %>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    <% } %>
+                <% }); %>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sayfa yüklendiğinde mevcut sepeti kontrol et
+        window.onload = function() {
+            guncelSepetSayisiniGoster();
+            // Tüm azaltma butonlarını kontrol et ve gerekirse disable yap
+            document.querySelectorAll('.azalt-btn').forEach(btn => {
+                const urunId = btn.id.replace('azalt-', '');
+                const adet = parseInt(document.getElementById(`adet-${urunId}`).textContent || 0);
+                btn.disabled = adet === 0;
+            });
+        };
+
+        // Sepet sayısını güncelleyen yardımcı fonksiyon
+        function guncelSepetSayisiniGoster() {
+            let toplamAdet = 0;
+            document.querySelectorAll('.urun-adet').forEach(adetSpan => {
+                toplamAdet += parseInt(adetSpan.textContent || 0);
+            });
+            document.getElementById('sepet-badge').textContent = toplamAdet;
+        }
+
+        function sepeteEkle(urunId, urunAdi, urunFiyat) {
+            const adetSpan = document.getElementById(`adet-${urunId}`);
+            const azaltBtn = document.getElementById(`azalt-${urunId}`);
+            
+            let mevcutAdet = parseInt(adetSpan.textContent || 0);
+            mevcutAdet += 1;
+            
+            // Sepete eklemek için sunucuya istek gönder
+            fetch('/kullanici-sepet/ekle', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    urunId: urunId,
+                    urunAdi: urunAdi,
+                    urunFiyat: urunFiyat,
+                    adet: mevcutAdet
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    adetSpan.textContent = mevcutAdet;
+                    azaltBtn.disabled = false;
+                    guncelSepetSayisiniGoster();
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function sepettenAzalt(urunId) {
+            const adetSpan = document.getElementById(`adet-${urunId}`);
+            const azaltBtn = document.getElementById(`azalt-${urunId}`);
+            let mevcutAdet = parseInt(adetSpan.textContent || 0);
+            
+            if (mevcutAdet > 0) {
+                mevcutAdet -= 1;
+                
+                // Sepetten azaltmak için sunucuya istek gönder
+                fetch('/kullanici-sepet/azalt', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        urunId: urunId,
+                        adet: mevcutAdet
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if(data.success) {
+                        adetSpan.textContent = mevcutAdet;
+                        azaltBtn.disabled = mevcutAdet === 0;
+                        guncelSepetSayisiniGoster();
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            }
+        }
+    </script>
+</body>
+
+</html>

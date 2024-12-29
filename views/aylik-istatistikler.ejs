@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Aylık İstatistikler</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .stat-title {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            height: 400px;
+            position: relative;
+        }
+
+        .chart-title {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <%- include('sidebar') %>
+
+    <div class="main-container">
+        <div class="content">
+            <div class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-title">Aylık Toplam Sipariş</div>
+                    <div class="stat-value" id="toplamSiparis">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Aylık Ciro</div>
+                    <div class="stat-value" id="aylikCiro">0 ₺</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Bu Ay Kar</div>
+                    <div class="stat-value" id="aylikKar">0 ₺</div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">Son 12 Ayın Finansal Analizi</div>
+                <canvas id="yillikAnalizChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let yillikGrafik = null;
+
+        async function istatistikleriGoster() {
+            try {
+                console.log('Aylık istatistikler yükleniyor...');
+                const response = await fetch('/api/aylik-istatistikler');
+                const data = await response.json();
+                console.log('Gelen veri:', data);
+                
+                if (data.success) {
+                    const paraBirimi = new Intl.NumberFormat('tr-TR', {
+                        style: 'currency',
+                        currency: 'TRY'
+                    });
+
+                    document.getElementById('aylikKar').textContent = 
+                        paraBirimi.format(data.aylik_kar);
+                    
+                    document.getElementById('toplamSiparis').textContent = 
+                        data.toplam_siparis.toLocaleString('tr-TR');
+                    
+                    document.getElementById('aylikCiro').textContent = 
+                        paraBirimi.format(data.aylik_ciro);
+                }
+            } catch (error) {
+                console.error('İstatistik yükleme hatası:', error);
+            }
+        }
+
+        async function yillikAnaliziGoster() {
+            try {
+                if (yillikGrafik) {
+                    yillikGrafik.destroy();
+                }
+
+                const response = await fetch('/api/yillik-analiz');
+                const data = await response.json();
+                
+                if (data.success && data.yillik_analiz) {
+                    const ctx = document.getElementById('yillikAnalizChart');
+                    
+                    yillikGrafik = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: data.yillik_analiz.map(item => {
+                                const [yil, ay] = item.ay.split('-');
+                                const buYil = new Date().getFullYear();
+                                const ayNumara = parseInt(ay) - 1;
+                                const tarih = new Date(buYil, ayNumara);
+                                return tarih.toLocaleDateString('tr-TR', { month: 'short', year: 'numeric' });
+                            }),
+                            datasets: [
+                                {
+                                    label: 'Gelir',
+                                    data: data.yillik_analiz.map(item => item.gelir),
+                                    backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                                    borderColor: 'rgba(75, 192, 192, 1)',
+                                    borderWidth: 1
+                                },
+                                {
+                                    label: 'Gider',
+                                    data: data.yillik_analiz.map(item => item.gider),
+                                    backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                                    borderColor: 'rgba(255, 99, 132, 1)',
+                                    borderWidth: 1
+                                },
+                                {
+                                    label: 'Kar',
+                                    data: data.yillik_analiz.map(item => item.kar),
+                                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                                    borderColor: 'rgba(54, 162, 235, 1)',
+                                    borderWidth: 1
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        callback: function(value) {
+                                            return value.toLocaleString('tr-TR', {
+                                                style: 'currency',
+                                                currency: 'TRY'
+                                            });
+                                        }
+                                    }
+                                }
+                            },
+                            plugins: {
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return context.dataset.label + ': ' + 
+                                                context.raw.toLocaleString('tr-TR', {
+                                                    style: 'currency',
+                                                    currency: 'TRY'
+                                                });
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Grafik oluşturma hatası:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            istatistikleriGoster();
+            yillikAnaliziGoster();
+        });
+
+        setInterval(() => {
+            istatistikleriGoster();
+            yillikAnaliziGoster();
+        }, 30000);
+    </script>
+</body>
+</html>
